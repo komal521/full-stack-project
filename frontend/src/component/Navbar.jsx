@@ -2,6 +2,7 @@ import searchIcon from "../assets/search.png";
 import heartIcon from "../assets/heart.png";
 import cartIcon from "../assets/shopping-cart.png";
 import userIcon from "../assets/user.png";
+import { Link } from "react-router-dom";
 const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -12,18 +13,16 @@ const Navbar = () => {
               Shop.
             </h1>
             <nav className="hidden md:flex items-center gap-7">
-              <a href="/" className="text-purple-600 font-medium">
-                Home
-              </a>
+             <Link to="/home" className="text-purple-600 font-medium">Home </Link>
               <a href="/" className="text-gray-600 hover:text-purple-600">
                 Products
               </a>
               <a href="/" className="text-gray-600 hover:text-purple-600">
                 Categories
               </a>
-              <a href="/" className="text-gray-600 hover:text-purple-600">
+             <Link to="/about" className="text-gray-600 hover:text-purple-600">
                 About
-              </a>
+              </Link>
               <a href="/" className="text-gray-600 hover:text-purple-600">
                 Contact
               </a>
