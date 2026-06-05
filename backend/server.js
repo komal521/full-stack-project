@@ -110,6 +110,278 @@ app.get("/api/users", (req, res) => {
   });
 });
 
+// ─── Add Category ───
+app.post("/api/categories", upload.single("image"), (req, res) => {
+  const {
+    category_name,
+    slug,
+    parent_category,
+    description,
+    seo_title,
+    seo_description,
+    status,
+    breadcrumb,
+    featured,
+    sitemap,
+    global_search,
+  } = req.body;
+
+  const image = req.file ? req.file.filename : null;
+
+  // FormData sends booleans as strings
+  const isFeatured = featured === 'true';
+  const isSitemap = sitemap === 'true';
+  const isGlobalSearch = global_search === 'true';
+
+  const sql = `
+    INSERT INTO categories (
+      category_name, slug, parent_category, description,
+      seo_title, seo_description, status, breadcrumb,
+      featured, sitemap, global_search, image
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    sql,
+    [
+      category_name,
+      slug,
+      parent_category,
+      description,
+      seo_title,
+      seo_description,
+      status || "Active",
+      breadcrumb,
+      isFeatured,
+      isSitemap,
+      isGlobalSearch,
+      image,
+    ],
+    (err, result) => {
+      if (err) {
+        console.log("Error inserting category:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to add category",
+        });
+      }
+      res.status(201).json({
+        success: true,
+        message: "Category added successfully",
+      });
+    }
+  );
+});
+
+// ─── Get Categories ───
+app.get("/api/categories", (req, res) => {
+  const sql = "SELECT * FROM categories ORDER BY id DESC";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.log("Categories fetch error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Categories fetch failed",
+      });
+    }
+
+    res.status(200).json({ success: true, categories: results });
+  });
+});
+
+// ─── Add Product ───
+app.post("/api/products", upload.single("image"), (req, res) => {
+  const {
+    productName,
+    description,
+    sku,
+    brand,
+    category,
+    subCategory,
+    basePrice,
+    discountPrice,
+    stockQuantity,
+    isActive,
+    isFeatured,
+    weight,
+    length,
+    width,
+    height,
+    baseColor,
+    metaTitle,
+    metaDescription,
+  } = req.body;
+
+  const image = req.file ? req.file.filename : null;
+
+  const isActiveBool = isActive === 'true' || isActive === 'on' || isActive === true;
+  const isFeaturedBool = isFeatured === 'true' || isFeatured === 'on' || isFeatured === true;
+
+  const sql = `
+    INSERT INTO products (
+      product_name, description, sku, brand, category, sub_category,
+      base_price, discount_price, stock_quantity, is_active, is_featured,
+      weight, length, width, height, base_color, meta_title, meta_description, image
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `;
+
+  db.query(
+    sql,
+    [
+      productName,
+      description,
+      sku,
+      brand,
+      category,
+      subCategory,
+      basePrice || 0,
+      discountPrice || 0,
+      stockQuantity || 0,
+      isActiveBool,
+      isFeaturedBool,
+      weight || 0,
+      length || 0,
+      width || 0,
+      height || 0,
+      baseColor,
+      metaTitle,
+      metaDescription,
+      image,
+    ],
+    (err, result) => {
+      if (err) {
+        console.log("Error inserting product:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to add product",
+        });
+      }
+      res.status(201).json({
+        success: true,
+        message: "Product added successfully",
+      });
+    }
+  );
+});
+
+// ─── Get Products ───
+app.get("/api/products", (req, res) => {
+  const sql = "SELECT * FROM products ORDER BY id DESC";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.log("Products fetch error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Products fetch failed",
+      });
+    }
+
+    res.status(200).json({ success: true, products: results });
+  });
+});
+
+// ─── Update Product ───
+app.put("/api/products/:id", upload.single("image"), (req, res) => {
+  const { id } = req.params;
+  const {
+    productName,
+    description,
+    sku,
+    brand,
+    category,
+    subCategory,
+    basePrice,
+    discountPrice,
+    stockQuantity,
+    isActive,
+    isFeatured,
+    weight,
+    length,
+    width,
+    height,
+    baseColor,
+    metaTitle,
+    metaDescription,
+  } = req.body;
+
+  const image = req.file ? req.file.filename : null;
+
+  const isActiveBool = isActive === 'true' || isActive === 'on' || isActive === true;
+  const isFeaturedBool = isFeatured === 'true' || isFeatured === 'on' || isFeatured === true;
+
+  let sql = "";
+  let params = [];
+
+  if (image) {
+    sql = `
+      UPDATE products SET 
+        product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?,
+        base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?,
+        weight=?, length=?, width=?, height=?, base_color=?, meta_title=?, meta_description=?, image=?
+      WHERE id=?
+    `;
+    params = [
+      productName, description, sku, brand, category, subCategory,
+      basePrice || 0, discountPrice || 0, stockQuantity || 0, isActiveBool, isFeaturedBool,
+      weight || 0, length || 0, width || 0, height || 0, baseColor, metaTitle, metaDescription, image, id
+    ];
+  } else {
+    sql = `
+      UPDATE products SET 
+        product_name=?, description=?, sku=?, brand=?, category=?, sub_category=?,
+        base_price=?, discount_price=?, stock_quantity=?, is_active=?, is_featured=?,
+        weight=?, length=?, width=?, height=?, base_color=?, meta_title=?, meta_description=?
+      WHERE id=?
+    `;
+    params = [
+      productName, description, sku, brand, category, subCategory,
+      basePrice || 0, discountPrice || 0, stockQuantity || 0, isActiveBool, isFeaturedBool,
+      weight || 0, length || 0, width || 0, height || 0, baseColor, metaTitle, metaDescription, id
+    ];
+  }
+
+  db.query(sql, params, (err, result) => {
+    if (err) {
+      console.log("Error updating product:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to update product",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Product updated successfully",
+    });
+  });
+});
+
+// ─── Get Product Cards Data ───
+app.get("/api/product/cards", (req, res) => {
+  const sql = `
+    SELECT 
+      COUNT(*) as totalProducts,
+      SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as activeProducts,
+      SUM(CASE WHEN stock_quantity > 0 AND stock_quantity <= 10 THEN 1 ELSE 0 END) as lowStockProducts,
+      SUM(CASE WHEN stock_quantity = 0 THEN 1 ELSE 0 END) as outOfStockProducts
+    FROM products
+  `;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.log("Cards fetch error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Cards fetch failed",
+      });
+    }
+
+    const data = results[0] || { totalProducts: 0, activeProducts: 0, lowStockProducts: 0, outOfStockProducts: 0 };
+    res.status(200).json(data);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server Running On Port ${PORT}`);
 });

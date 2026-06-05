@@ -2,7 +2,8 @@ import heroImage from "../assets/p1.avif";
 import arrowIcon from "../assets/right-arrow (1).png";
 import starIcon from "../assets/star.png";
 import Navbar from "../component/Navbar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import k1 from "../assets/k1.webp";
 import k2 from "../assets/k2.webp";
 import k3 from "../assets/k3.webp";
@@ -29,44 +30,33 @@ import viewArrow from "../assets/right-arrow (1).png";
 const Home = () => {
   const [activeCategory, setActiveCategory] = useState(1);
   const [activeReview, setActiveReview] = useState(3);
-  const categories = [
-  {
-    id: 1,
-    name: "Electronics",
-    products: "1,240 Products",
-    image: k1,
-  },
-  {
-    id: 2,
-    name: "Fashion",
-    products: "4,500 Products",
-    image: k2,
-  },
-  {
-    id: 3,
-    name: "Accessories",
-    products: "890 Products",
-    image: k3,
-  },
-  {
-    id: 4,
-    name: "Home & Living",
-    products: "2,100 Products",
-    image: k4,
-  },
-  {
-    id: 5,
-    name: "Beauty",
-    products: "1,150 Products",
-    image: k5,
-  },
-  {
-    id: 6,
-    name: "Computers",
-    products: "670 Products",
-    image: k6,
-  },
-];
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/categories");
+        if (response.data.success) {
+          setCategories(response.data.categories);
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+      }
+    };
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/products");
+        if (response.data.success) {
+          setProducts(response.data.products);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      }
+    };
+    fetchCategories();
+    fetchProducts();
+  }, []);
 const featuredProducts = [
   {
     id: 1,
@@ -151,6 +141,32 @@ const testimonials = [
   review: "Finding premium bags that are actually durable is tough. The voyager duffel is now my go-to for all location shoots.",
 },
 ];
+const fetchedFeaturedProducts = products.filter((p) => p.is_featured).slice(0, 4).map((p) => ({
+  id: p.id,
+  image: p.image ? `http://localhost:5000/uploads/${p.image}` : m1,
+  category: p.category,
+  title: p.product_name,
+  price: `₹${Number(p.base_price || 0).toFixed(2)}`,
+  oldPrice: p.discount_price && p.discount_price > 0 ? `₹${Number(p.discount_price || 0).toFixed(2)}` : "",
+  discount: "",
+}));
+let displayFeatured = [...fetchedFeaturedProducts];
+if (displayFeatured.length < 4) {
+  const filler = featuredProducts.slice(0, 4 - displayFeatured.length).map(p => ({...p, id: `static-feat-${p.id}`}));
+  displayFeatured = [...displayFeatured, ...filler];
+}
+
+const fetchedNewArrivals = products.slice(0, 3).map((p) => ({
+  id: p.id,
+  image: p.image ? `http://localhost:5000/uploads/${p.image}` : k1,
+  title: p.product_name,
+  price: `₹${Number(p.base_price || 0).toFixed(2)}`,
+}));
+let displayNewArrivals = [...fetchedNewArrivals];
+if (displayNewArrivals.length < 3) {
+  const filler = newArrivals.slice(0, 3 - displayNewArrivals.length).map(p => ({...p, id: `static-new-${p.id}`}));
+  displayNewArrivals = [...displayNewArrivals, ...filler];
+}
   return (
        <>
       <Navbar />
@@ -249,13 +265,13 @@ const testimonials = [
                 ? "bg-white"
                 : "bg-gray-100"
             }`}>
-            <img src={item.image} alt={item.name}  className="w-8 h-8 object-contain" />
+            <img src={item.image ? `http://localhost:5000/uploads/${item.image}` : ""} alt={item.category_name}  className="w-8 h-8 object-contain" />
           </div>
           <h3 className={`font-semibold ${   activeCategory === item.id
                 ? "text-white"
                 : "text-gray-900"
             }`}>
-            {item.name}
+            {item.category_name}
           </h3>
           <p
             className={`text-sm mt-1 ${
@@ -263,7 +279,7 @@ const testimonials = [
                 ? "text-white/80"
                 : "text-gray-500"
             }`} >
-            {item.products}
+            1,240 Products
           </p>
         </div>
       ))}
@@ -287,7 +303,7 @@ const testimonials = [
       </p>
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      {featuredProducts.map((product) => (
+      {displayFeatured.map((product) => (
         <div  key={product.id}
           className="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition">
           <div className="relative">
@@ -400,7 +416,7 @@ const testimonials = [
       </div>
     </div>
     <div className="grid md:grid-cols-3 gap-6">
-      {newArrivals.map((item) => (
+      {displayNewArrivals.map((item) => (
         <div key={item.id}
           className="bg-white border rounded-xl p-4 flex items-center gap-4 hover:shadow-lg transition">
           <img src={item.image} alt="" className="w-24 h-24 rounded-lg object-cover"/>
