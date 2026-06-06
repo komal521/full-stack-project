@@ -3,17 +3,11 @@ const cors = require("cors");
 const path = require("path");
 const multer = require("multer");
 const db = require("./config/db");
-
 const app = express();
 const PORT = 5000;
-
 app.use(cors());
 app.use(express.json());
-
-// Serve uploaded images statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-// Multer setup for profile image upload
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, path.join(__dirname, "uploads"));
@@ -24,12 +18,9 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
-
 app.get("/", (req, res) => {
   res.send("Backend Running Successfully");
 });
-
-// ─── Register User (with optional profile image) ───
 app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
   const {
     fullName,
@@ -40,9 +31,7 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
     dob,
     password,
   } = req.body;
-
   const profileImage = req.file ? req.file.filename : null;
-
   const sql = `
     INSERT INTO users
     (
@@ -57,7 +46,6 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
     )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
   db.query(
     sql,
     [fullName, username, email, phone, gender, dob, password, profileImage],
@@ -70,7 +58,6 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
           message: "Registration Failed",
         });
       }
-
       res.status(201).json({
         success: true,
         message: "Registration Successful",
@@ -78,11 +65,8 @@ app.post("/api/auth/register", upload.single("profileImage"), (req, res) => {
     }
   );
 });
-
-// ─── Get All Users (for Admin Panel) ───
 app.get("/api/users", (req, res) => {
   const sql = "SELECT * FROM users ORDER BY id DESC";
-
   db.query(sql, (err, results) => {
     if (err) {
       console.log("Users fetch error:", err);
@@ -91,8 +75,6 @@ app.get("/api/users", (req, res) => {
         message: "Users fetch failed",
       });
     }
-
-    // Map DB column names to frontend-friendly keys
     const users = results.map((u) => ({
       id: u.id,
       fullName: u.full_name,
@@ -109,8 +91,6 @@ app.get("/api/users", (req, res) => {
     res.status(200).json({ success: true, users });
   });
 });
-
-// ─── Add Category ───
 app.post("/api/categories", upload.single("image"), (req, res) => {
   const {
     category_name,
@@ -125,14 +105,10 @@ app.post("/api/categories", upload.single("image"), (req, res) => {
     sitemap,
     global_search,
   } = req.body;
-
   const image = req.file ? req.file.filename : null;
-
-  // FormData sends booleans as strings
   const isFeatured = featured === 'true';
   const isSitemap = sitemap === 'true';
   const isGlobalSearch = global_search === 'true';
-
   const sql = `
     INSERT INTO categories (
       category_name, slug, parent_category, description,
@@ -140,7 +116,6 @@ app.post("/api/categories", upload.single("image"), (req, res) => {
       featured, sitemap, global_search, image
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
   db.query(
     sql,
     [
@@ -172,11 +147,8 @@ app.post("/api/categories", upload.single("image"), (req, res) => {
     }
   );
 });
-
-// ─── Get Categories ───
 app.get("/api/categories", (req, res) => {
   const sql = "SELECT * FROM categories ORDER BY id DESC";
-
   db.query(sql, (err, results) => {
     if (err) {
       console.log("Categories fetch error:", err);
@@ -185,12 +157,9 @@ app.get("/api/categories", (req, res) => {
         message: "Categories fetch failed",
       });
     }
-
     res.status(200).json({ success: true, categories: results });
   });
 });
-
-// ─── Add Product ───
 app.post("/api/products", upload.single("image"), (req, res) => {
   const {
     productName,
@@ -212,12 +181,9 @@ app.post("/api/products", upload.single("image"), (req, res) => {
     metaTitle,
     metaDescription,
   } = req.body;
-
   const image = req.file ? req.file.filename : null;
-
   const isActiveBool = isActive === 'true' || isActive === 'on' || isActive === true;
   const isFeaturedBool = isFeatured === 'true' || isFeatured === 'on' || isFeatured === true;
-
   const sql = `
     INSERT INTO products (
       product_name, description, sku, brand, category, sub_category,
@@ -225,7 +191,6 @@ app.post("/api/products", upload.single("image"), (req, res) => {
       weight, length, width, height, base_color, meta_title, meta_description, image
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
-
   db.query(
     sql,
     [
@@ -264,11 +229,8 @@ app.post("/api/products", upload.single("image"), (req, res) => {
     }
   );
 });
-
-// ─── Get Products ───
 app.get("/api/products", (req, res) => {
   const sql = "SELECT * FROM products ORDER BY id DESC";
-
   db.query(sql, (err, results) => {
     if (err) {
       console.log("Products fetch error:", err);
@@ -277,12 +239,9 @@ app.get("/api/products", (req, res) => {
         message: "Products fetch failed",
       });
     }
-
     res.status(200).json({ success: true, products: results });
   });
 });
-
-// ─── Update Product ───
 app.put("/api/products/:id", upload.single("image"), (req, res) => {
   const { id } = req.params;
   const {
@@ -305,15 +264,11 @@ app.put("/api/products/:id", upload.single("image"), (req, res) => {
     metaTitle,
     metaDescription,
   } = req.body;
-
   const image = req.file ? req.file.filename : null;
-
   const isActiveBool = isActive === 'true' || isActive === 'on' || isActive === true;
   const isFeaturedBool = isFeatured === 'true' || isFeatured === 'on' || isFeatured === true;
-
   let sql = "";
   let params = [];
-
   if (image) {
     sql = `
       UPDATE products SET 
@@ -341,7 +296,6 @@ app.put("/api/products/:id", upload.single("image"), (req, res) => {
       weight || 0, length || 0, width || 0, height || 0, baseColor, metaTitle, metaDescription, id
     ];
   }
-
   db.query(sql, params, (err, result) => {
     if (err) {
       console.log("Error updating product:", err);
@@ -356,8 +310,6 @@ app.put("/api/products/:id", upload.single("image"), (req, res) => {
     });
   });
 });
-
-// ─── Get Product Cards Data ───
 app.get("/api/product/cards", (req, res) => {
   const sql = `
     SELECT 

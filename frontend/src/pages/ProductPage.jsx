@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../component/Navbar";
 import Footer from "../component/Footer";
 import z2 from "../assets/z2.webp";
@@ -28,7 +28,6 @@ import b6 from "../assets/b6.webp";
 import c1 from "../assets/c1.avif";
 import c2 from "../assets/c2.webp";
 import c3 from "../assets/c3.avif";
-/* ── voice of luxury images ── */
 import u1 from "../assets/u1.avif";
 const curatedProducts = [
   { img: m1,  tag: "Headphones",  title: "Zenith Studio Headphones",    price: "₹24,500",  oldPrice: "₹29,999", rating: "4.8" },
@@ -155,6 +154,17 @@ const SectionHeader = ({ title, highlight, subtitle, btnLabel = "View All Collec
 const ProductPage = () => {
   const [qty, setQty] = useState(1);
   const [active, setActive] = useState(0);
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+  fetch("http://localhost:5000/api/products")
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.success) {
+        setProducts(data.products);
+      }
+    })
+    .catch((err) => console.log(err));
+}, []);
   return (
     <>
       <Navbar />
@@ -243,9 +253,17 @@ const ProductPage = () => {
           <SectionHeader title="Curated" highlight="Essentials"
             subtitle="Discover the season's most wanted luxury items." />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {curatedProducts.map((item, i) => (
-              <ProductCard key={i} {...item} />
-            ))}
+           {products.map((item) => (
+  <ProductCard
+    key={item.id}
+    img={`http://localhost:5000/uploads/${item.image}`}
+    tag={item.category}
+    title={item.product_name}
+    price={`₹${item.base_price}`}
+    oldPrice={`₹${item.discount_price}`}
+    rating="4.8"
+  />
+))}
           </div>
                     <div className="flex justify-center mt-8 sm:hidden">
             <button className="flex items-center gap-2 border border-purple-300 text-purple-600 px-5 py-2 rounded-full text-sm">
